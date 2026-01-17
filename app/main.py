@@ -5,9 +5,7 @@ import numpy as np
 
 app = FastAPI(title="Credit Card Fraud Detection API")
 
-# Load model
 model = joblib.load("models/logistic_model.joblib")
-scaler = joblib.load("models/scaler.joblib")
 
 # Input schema
 class Transaction(BaseModel):
@@ -47,15 +45,15 @@ class Transaction(BaseModel):
 def home():
     return {"message": "Fraud Detection API is running"}
 
+
 @app.post("/predict")
 def predict(transaction: Transaction):
     data = np.array([[*transaction.dict().values()]])
-    data_scaled = scaler.transform(data)
 
-    prediction = model.predict(data_scaled)[0]
-    probability = model.predict_proba(data_scaled)[0][1]
+    prediction = model.predict(data)[0]
+    probability = model.predict_proba(data)[0][1]
 
     return {
         "fraud_prediction": int(prediction),
-        "fraud_probability": round(probability, 4)
+        "fraud_probability": round(float(probability), 4)
     }
