@@ -1,26 +1,61 @@
-"""
-Main FastAPI application for ML model predictions.
-This module provides endpoints for Logistic Regression and Decision Tree models.
-"""
-
 from fastapi import FastAPI
+from pydantic import BaseModel
 import joblib
+import numpy as np
 
-app = FastAPI(title="ML FastAPI Backend")
+app = FastAPI(title="Credit Card Fraud Detection API")
 
-logistic_model = joblib.load("models/logistic_model.joblib")
-tree_model = joblib.load("models/decision_tree_model.joblib")
+# Load model
+model = joblib.load("models/logistic_model.joblib")
+scaler = joblib.load("models/scaler.joblib")
+
+# Input schema
+class Transaction(BaseModel):
+    Time: float
+    V1: float
+    V2: float
+    V3: float
+    V4: float
+    V5: float
+    V6: float
+    V7: float
+    V8: float
+    V9: float
+    V10: float
+    V11: float
+    V12: float
+    V13: float
+    V14: float
+    V15: float
+    V16: float
+    V17: float
+    V18: float
+    V19: float
+    V20: float
+    V21: float
+    V22: float
+    V23: float
+    V24: float
+    V25: float
+    V26: float
+    V27: float
+    V28: float
+    Amount: float
+
 
 @app.get("/")
-def root():
-    return {"message": "FastAPI ML Backend Running"}
+def home():
+    return {"message": "Fraud Detection API is running"}
 
-@app.post("/predict/logistic")
-def predict_logistic(features: list):
-    prediction = logistic_model.predict([features])
-    return {"model": "Logistic Regression", "prediction": int(prediction[0])}
+@app.post("/predict")
+def predict(transaction: Transaction):
+    data = np.array([[*transaction.dict().values()]])
+    data_scaled = scaler.transform(data)
 
-@app.post("/predict/tree")
-def predict_tree(features: list):
-    prediction = tree_model.predict([features])
-    return {"model": "Decision Tree", "prediction": int(prediction[0])}
+    prediction = model.predict(data_scaled)[0]
+    probability = model.predict_proba(data_scaled)[0][1]
+
+    return {
+        "fraud_prediction": int(prediction),
+        "fraud_probability": round(probability, 4)
+    }
